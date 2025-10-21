@@ -27,13 +27,6 @@ document.body.appendChild(canvas);
 ctx.fillStyle = "green";
 ctx.fillRect(0, 0, 256, 256);
 
-// When true, moving the mouse draws on the canvas
-
-// event.offsetX, event.offsetY gives the (x,y) offset from the edge of the canvas.
-
-// Add the event listeners for mousedown, mousemove, and mouseup
-//const canvas = document.createElement("canvas")!;
-
 let isDrawing: boolean = false;
 let x = 0;
 let y = 0;
