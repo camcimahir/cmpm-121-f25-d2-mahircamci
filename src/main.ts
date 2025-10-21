@@ -39,6 +39,9 @@ clearButton.addEventListener("click", () => {
 canvas.addEventListener("mousedown", (e) => {
   x = e.offsetX;
   y = e.offsetY;
+  console.log();
+  console.log();
+
   isDrawing = true;
 });
 
