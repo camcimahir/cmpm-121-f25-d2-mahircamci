@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 // deno-lint-ignore-file prefer-const
 import "./style.css";
 
@@ -130,9 +131,9 @@ globalThis.addEventListener("mouseup", (e) => {
   }
 });
 
-let testPoint1: point = { x: 29, y: 60 };
-let testPoint2: point = { x: 127, y: 201 };
-let testPoint3: point = { x: 207, y: 60 };
+//let testPoint1: point = { x: 29, y: 60 };
+//let testPoint2: point = { x: 127, y: 201 };
+//let testPoint3: point = { x: 207, y: 60 };
 
 function printArr(sampleArr: point[]) {
   for (let pointElement of sampleArr) {
@@ -148,4 +149,7 @@ printArr(pointArr);
 
 redraw(pointArr);*/
 
-//how to do step 4 
+//how to do step 4:
+//undo just deletes last element of line array, redo references buffer that stored the deleted
+//line
+//(Note:)
