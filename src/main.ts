@@ -1,5 +1,6 @@
 // deno-lint-ignore-file
 // deno-lint-ignore-file prefer-const
+
 import "./style.css";
 
 document.body.innerHTML = `
@@ -120,6 +121,12 @@ canvas.addEventListener("mousemove", (e) => {
   }
 });
 
+/*function printArr(sampleArr: point[]) {
+  for (let pointElement of sampleArr) {
+    console.log("X: " + pointElement.x + " Y: " + pointElement.y);
+  }
+} */
+
 globalThis.addEventListener("mouseup", (e) => {
   if (isDrawing) {
     //drawLine(ctx, x, y, e.offsetX, e.offsetY);
@@ -135,12 +142,6 @@ globalThis.addEventListener("mouseup", (e) => {
 //let testPoint2: point = { x: 127, y: 201 };
 //let testPoint3: point = { x: 207, y: 60 };
 
-function printArr(sampleArr: point[]) {
-  for (let pointElement of sampleArr) {
-    console.log("X: " + pointElement.x + " Y: " + pointElement.y);
-  }
-}
-
 /*pointArr.push(testPoint1);
 pointArr.push(testPoint2);
 pointArr.push(testPoint3);
@@ -152,4 +153,5 @@ redraw(pointArr);*/
 //how to do step 4:
 //undo just deletes last element of line array, redo references buffer that stored the deleted
 //line
-//(Note:)
+//(Note: make buffer big enough to store muliple lines)
+// maybe makeinterface for each line stored
