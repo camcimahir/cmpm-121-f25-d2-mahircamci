@@ -20,10 +20,21 @@ clearButton.id = "clearButton";
 clearButton.innerHTML = "Clear";
 document.body.appendChild(clearButton);
 
+const undoButton = document.createElement("button") as HTMLButtonElement;
+undoButton.id = "undoButton";
+undoButton.innerHTML = "Undo";
+document.body.appendChild(undoButton);
+
+const redoButton = document.createElement("button") as HTMLButtonElement;
+redoButton.id = "redoButton";
+redoButton.innerHTML = "Redo";
+document.body.appendChild(redoButton);
+
 canvas.width = 256;
 canvas.height = 256;
 canvas.style.position = "absolute";
-canvas.style.left = "50px";
+canvas.style.left = "10px";
+canvas.style.top = "110px";
 
 document.body.appendChild(canvas);
 
@@ -41,6 +52,7 @@ interface point {
 
 let lineArr: point[][] = [];
 let pointArr: point[] = [];
+let redoStack: point[][] = [];
 
 function drawLine(
   ctx: CanvasRenderingContext2D,
@@ -86,8 +98,30 @@ bus.addEventListener("drawing-changed", redraw);
 clearButton.addEventListener("click", () => {
   lineArr = [];
   pointArr = [];
+  redoStack = [];
   ctx.fillStyle = "green";
   ctx.fillRect(0, 0, 256, 256);
+  notify("drawing-changed");
+});
+
+undoButton.addEventListener("click", () => {
+  if (lineArr.length > 0) {
+    const undoneLine = lineArr.pop();
+    if (undoneLine) {
+      redoStack.push(undoneLine);
+    }
+    notify("drawing-changed");
+  }
+});
+
+redoButton.addEventListener("click", () => {
+  if (redoStack.length > 0) {
+    const redoneLine = redoStack.pop();
+    if (redoneLine) {
+      lineArr.push(redoneLine);
+    }
+    notify("drawing-changed");
+  }
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -96,6 +130,7 @@ canvas.addEventListener("mousedown", (e) => {
 
   pointArr = [];
   lineArr.push(pointArr);
+  redoStack = [];
   notify("drawing-changed");
   isDrawing = true;
 });
