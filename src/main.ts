@@ -43,6 +43,18 @@ thickButton.id = "thickButton";
 thickButton.innerHTML = "thick";
 document.body.appendChild(thickButton);
 
+const previewDot = document.createElement("div");
+previewDot.style.position = "absolute";
+previewDot.style.pointerEvents = "none"; // Don't interfere with canvas events
+previewDot.style.width = "10px";
+previewDot.style.height = "10px";
+previewDot.style.borderRadius = "50%";
+previewDot.style.backgroundColor = "black";
+previewDot.style.transform = "translate(-50%, -50%)"; // Center on cursor
+previewDot.style.display = "none"; // Hidden by default
+previewDot.style.zIndex = "1000";
+document.body.appendChild(previewDot);
+
 canvas.width = 256;
 canvas.height = 256;
 canvas.style.position = "absolute";
@@ -56,6 +68,7 @@ ctx.fillRect(0, 0, 256, 256);
 
 let x = 0;
 let y = 0;
+let activeTool: "none" | "thin" | "thick" = "none";
 let lineWidth = 1;
 
 interface point {
@@ -154,11 +167,18 @@ redoButton.addEventListener("click", () => {
 });
 
 thinButton.addEventListener("click", () => {
+  activeTool = "thin";
+  previewDot.style.width = "3px";
+  previewDot.style.height = "3px";
   lineWidth = 1;
+  //activeTool = "thin";
 });
 
 thickButton.addEventListener("click", () => {
   lineWidth = 5;
+  activeTool = "thick";
+  previewDot.style.width = "7px";
+  previewDot.style.height = "7px";
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -175,6 +195,16 @@ canvas.addEventListener("mousemove", (e) => {
     currentLine.drag(e.offsetX, e.offsetY);
     notify("drawing-changed");
   }
+  /*
+  if (activeTool !== "none") {
+    // Position the dot at mouse
+    //console.log("hello");
+    //console.log(activeTool);
+    previewDot.style.left = `${e.clientX}px`;
+    previewDot.style.top = `${e.clientY}px`;
+    previewDot.style.display = "block";
+    previewDot.style.opacity = "0.5";
+  }*/
 });
 
 globalThis.addEventListener("mouseup", (e) => {
@@ -185,3 +215,55 @@ globalThis.addEventListener("mouseup", (e) => {
     notify("drawing-changed");
   }
 });
+
+thinButton.addEventListener("mouseover", () => {
+  activeTool = "thin";
+  previewDot.style.opacity = "0.5";
+  previewDot.style.display = "block";
+  previewDot.style.left = "150px";
+  previewDot.style.top = "250px";
+  previewDot.style.width = "3px";
+  previewDot.style.height = "3px";
+});
+
+document.addEventListener("mousemove", (e) => {
+  previewDot.style.left = `${e.clientX}px`;
+  previewDot.style.top = `${e.clientY}px`;
+});
+
+thickButton.addEventListener("mouseover", () => {
+  activeTool = "thick";
+  previewDot.style.opacity = "0.5";
+  previewDot.style.display = "block";
+  previewDot.style.left = "150px";
+  previewDot.style.top = "250px";
+  previewDot.style.width = "7px";
+  previewDot.style.height = "7px";
+});
+
+// Hide on mouseout
+thinButton.addEventListener("mouseout", () => {
+  //activeTool = "none";
+  previewDot.style.display = "none";
+});
+thickButton.addEventListener("mouseout", () => {
+  //activeTool = "none";
+  previewDot.style.display = "none";
+});
+
+// Hide preview when leaving canvas
+canvas.addEventListener("mouseout", () => {
+  previewDot.style.display = "none";
+});
+
+// Re-show when back over canvas (if tool still active)
+/*
+canvas.addEventListener("mouseenter", (e) => {
+  if (activeTool !== "none") {
+    previewDot.style.opacity = "0.5";
+    previewDot.style.display = "block";
+    previewDot.style.left = `${e.clientX}px`;
+    previewDot.style.top = `${e.clientY}px`;
+  }
+});
+*/
