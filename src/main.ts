@@ -12,6 +12,9 @@ titleElement.innerHTML = "CMPM 170 Homework";
 document.body.appendChild(titleElement);
 
 const canvas = document.createElement("canvas")!;
+if (!canvas) {
+  console.error("Canvas not found!");
+}
 canvas.id = "canvasVar";
 const ctx = canvas.getContext("2d")!;
 
@@ -41,7 +44,6 @@ document.body.appendChild(canvas);
 ctx.fillStyle = "green";
 ctx.fillRect(0, 0, 256, 256);
 
-let isDrawing: boolean = false;
 let x = 0;
 let y = 0;
 
@@ -50,40 +52,54 @@ interface point {
   y: number;
 }
 
-let lineArr: point[][] = [];
-let pointArr: point[] = [];
-let redoStack: point[][] = [];
-
-function drawLine(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) {
-  ctx.beginPath();
-  ctx.strokeStyle = "black";
-  ctx.lineWidth = 1;
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  ctx.closePath();
+interface Command {
+  display(ctx: CanvasRenderingContext2D): void;
+  drag(x: number, y: number): void;
 }
+
+class MarkerLine implements Command {
+  private points: point[];
+
+  constructor(x: number, y: number) {
+    this.points = [{ x, y }];
+  }
+
+  drag(x: number, y: number): void {
+    this.points.push({ x, y });
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+    if (this.points.length < 2) return;
+
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+
+    for (let i = 1; i < this.points.length; i++) {
+      ctx.lineTo(this.points[i].x, this.points[i].y);
+    }
+
+    ctx.stroke();
+    ctx.closePath();
+  }
+}
+
+let lineArr: Command[] = [];
+let redoStack: Command[] = [];
+let currentLine: Command | null = null;
+let isDrawing: boolean = false;
 
 function redraw(/*drawing: point[]*/) {
   ctx.fillStyle = "green";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let pointArr of lineArr) {
-    for (let i = 0; i < pointArr.length - 1; i++) {
-      drawLine(
-        ctx,
-        pointArr[i].x,
-        pointArr[i].y,
-        pointArr[i + 1].x,
-        pointArr[i + 1].y,
-      );
-    }
+  for (const cmd of lineArr) {
+    cmd.display(ctx);
+  }
+
+  if (currentLine) {
+    currentLine.display(ctx);
   }
 }
 
@@ -97,8 +113,8 @@ bus.addEventListener("drawing-changed", redraw);
 
 clearButton.addEventListener("click", () => {
   lineArr = [];
-  pointArr = [];
   redoStack = [];
+  currentLine = null;
   ctx.fillStyle = "green";
   ctx.fillRect(0, 0, 256, 256);
   notify("drawing-changed");
@@ -125,17 +141,20 @@ redoButton.addEventListener("click", () => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
+  isDrawing = true;
   x = e.offsetX;
   y = e.offsetY;
-
-  pointArr = [];
-  lineArr.push(pointArr);
+  currentLine = new MarkerLine(e.offsetX, e.offsetY);
   redoStack = [];
   notify("drawing-changed");
-  isDrawing = true;
 });
 
 canvas.addEventListener("mousemove", (e) => {
+  if (isDrawing && currentLine) {
+    currentLine.drag(e.offsetX, e.offsetY);
+    notify("drawing-changed");
+  }
+  /*
   if (isDrawing) {
     //drawLine(ctx, x, y, e.offsetX, e.offsetY);
     x = e.offsetX;
@@ -154,22 +173,19 @@ canvas.addEventListener("mousemove", (e) => {
       console.log("pointX: " + element.x + "pointY: " + element.y);
     }
   }
+  */
 });
 
-/*function printArr(sampleArr: point[]) {
-  for (let pointElement of sampleArr) {
-    console.log("X: " + pointElement.x + " Y: " + pointElement.y);
-  }
-} */
-
 globalThis.addEventListener("mouseup", (e) => {
-  if (isDrawing) {
+  if (isDrawing && currentLine) {
     //drawLine(ctx, x, y, e.offsetX, e.offsetY);
-    notify("drawing-changed");
-    x = 0;
-    y = 0;
-    pointArr = [];
+    lineArr.push(currentLine);
+    currentLine = null;
     isDrawing = false;
+    notify("drawing-changed");
+    //x = 0;
+    //y = 0;
+    //pointArr = [];
   }
 });
 
