@@ -33,6 +33,16 @@ redoButton.id = "redoButton";
 redoButton.innerHTML = "Redo";
 document.body.appendChild(redoButton);
 
+const thinButton = document.createElement("button") as HTMLButtonElement;
+thinButton.id = "thinButton";
+thinButton.innerHTML = "thin";
+document.body.appendChild(thinButton);
+
+const thickButton = document.createElement("button") as HTMLButtonElement;
+thickButton.id = "thickButton";
+thickButton.innerHTML = "thick";
+document.body.appendChild(thickButton);
+
 canvas.width = 256;
 canvas.height = 256;
 canvas.style.position = "absolute";
@@ -46,6 +56,7 @@ ctx.fillRect(0, 0, 256, 256);
 
 let x = 0;
 let y = 0;
+let lineWidth = 1;
 
 interface point {
   x: number;
@@ -59,9 +70,11 @@ interface Command {
 
 class MarkerLine implements Command {
   private points: point[];
+  private lineWidth: number;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, lineWidth: number) {
     this.points = [{ x, y }];
+    this.lineWidth = lineWidth;
   }
 
   drag(x: number, y: number): void {
@@ -73,7 +86,7 @@ class MarkerLine implements Command {
 
     ctx.beginPath();
     ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = this.lineWidth;
     ctx.moveTo(this.points[0].x, this.points[0].y);
 
     for (let i = 1; i < this.points.length; i++) {
@@ -140,11 +153,19 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+thinButton.addEventListener("click", () => {
+  lineWidth = 1;
+});
+
+thickButton.addEventListener("click", () => {
+  lineWidth = 5;
+});
+
 canvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   x = e.offsetX;
   y = e.offsetY;
-  currentLine = new MarkerLine(e.offsetX, e.offsetY);
+  currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth);
   redoStack = [];
   notify("drawing-changed");
 });
@@ -154,55 +175,13 @@ canvas.addEventListener("mousemove", (e) => {
     currentLine.drag(e.offsetX, e.offsetY);
     notify("drawing-changed");
   }
-  /*
-  if (isDrawing) {
-    //drawLine(ctx, x, y, e.offsetX, e.offsetY);
-    x = e.offsetX;
-    y = e.offsetY;
-
-    let newPoint: point = { x: x, y: y };
-
-    pointArr.push(newPoint);
-
-    notify("drawing-changed");
-
-    console.log("x: " + x);
-    console.log("y: " + y);
-
-    for (const element of pointArr) {
-      console.log("pointX: " + element.x + "pointY: " + element.y);
-    }
-  }
-  */
 });
 
 globalThis.addEventListener("mouseup", (e) => {
   if (isDrawing && currentLine) {
-    //drawLine(ctx, x, y, e.offsetX, e.offsetY);
     lineArr.push(currentLine);
     currentLine = null;
     isDrawing = false;
     notify("drawing-changed");
-    //x = 0;
-    //y = 0;
-    //pointArr = [];
   }
 });
-
-//let testPoint1: point = { x: 29, y: 60 };
-//let testPoint2: point = { x: 127, y: 201 };
-//let testPoint3: point = { x: 207, y: 60 };
-
-/*pointArr.push(testPoint1);
-pointArr.push(testPoint2);
-pointArr.push(testPoint3);
-
-printArr(pointArr);
-
-redraw(pointArr);*/
-
-//how to do step 4:
-//undo just deletes last element of line array, redo references buffer that stored the deleted
-//line
-//(Note: make buffer big enough to store muliple lines)
-// maybe makeinterface for each line stored
