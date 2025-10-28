@@ -43,6 +43,28 @@ thickButton.id = "thickButton";
 thickButton.innerHTML = "thick";
 document.body.appendChild(thickButton);
 
+const stickerContainer = document.createElement("div");
+stickerContainer.id = "stickers";
+document.body.appendChild(stickerContainer);
+
+const stickers = ["🦖", "🌮", "🚀", "🧠", "🎨"];
+
+let selectedSticker: string | null = null;
+let activeTool: "none" | "thin" | "thick" | "sticker" = "none";
+
+stickers.forEach((sticker) => {
+  const btn = document.createElement("button");
+  btn.innerHTML = sticker;
+  btn.title = `Use ${sticker}`;
+  btn.style.fontSize = "20px";
+  btn.addEventListener("click", () => {
+    selectedSticker = sticker;
+    activeTool = "sticker";
+    bus.dispatchEvent(new Event("tool-moved"));
+  });
+  stickerContainer.appendChild(btn);
+});
+
 const previewDot = document.createElement("div");
 previewDot.style.position = "absolute";
 previewDot.style.pointerEvents = "none"; // Don't interfere with canvas events
@@ -59,7 +81,7 @@ canvas.width = 256;
 canvas.height = 256;
 canvas.style.position = "absolute";
 canvas.style.left = "10px";
-canvas.style.top = "110px";
+canvas.style.top = "150px";
 
 document.body.appendChild(canvas);
 
@@ -68,7 +90,6 @@ ctx.fillRect(0, 0, 256, 256);
 
 let x = 0;
 let y = 0;
-let activeTool: "none" | "thin" | "thick" = "none";
 let lineWidth = 1;
 
 interface point {
@@ -111,10 +132,62 @@ class MarkerLine implements Command {
   }
 }
 
+class StickerPreview implements Command {
+  private x: number;
+  private y: number;
+  private emoji: string;
+
+  constructor(x: number, y: number, emoji: string) {
+    this.x = x;
+    this.y = y;
+    this.emoji = emoji;
+  }
+
+  drag(x: number, y: number): void {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+    ctx.globalAlpha = 0.5; // Make preview semi-transparent
+    ctx.font = "32px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.emoji, this.x, this.y);
+    ctx.globalAlpha = 1.0; // Reset alpha
+  }
+}
+
+class StickerStamp implements Command {
+  private x: number;
+  private y: number;
+  private emoji: string;
+
+  constructor(x: number, y: number, emoji: string) {
+    this.x = x;
+    this.y = y;
+    this.emoji = emoji;
+  }
+
+  drag(x: number, y: number): void {
+    // Reposition the sticker instead of drawing a path
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+    ctx.font = "32px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.emoji, this.x, this.y);
+  }
+}
+
 let lineArr: Command[] = [];
 let redoStack: Command[] = [];
 let currentLine: Command | null = null;
 let isDrawing: boolean = false;
+let stickerPreview: StickerPreview | null = null;
 
 function redraw(/*drawing: point[]*/) {
   ctx.fillStyle = "green";
@@ -127,6 +200,10 @@ function redraw(/*drawing: point[]*/) {
   if (currentLine) {
     currentLine.display(ctx);
   }
+
+  if (stickerPreview) {
+    stickerPreview.display(ctx);
+  }
 }
 
 const bus = new EventTarget();
@@ -136,6 +213,7 @@ function notify(name: string) {
 }
 
 bus.addEventListener("drawing-changed", redraw);
+bus.addEventListener("tool-moved", redraw);
 
 clearButton.addEventListener("click", () => {
   lineArr = [];
@@ -171,6 +249,8 @@ thinButton.addEventListener("click", () => {
   previewDot.style.width = "3px";
   previewDot.style.height = "3px";
   lineWidth = 1;
+  selectedSticker = null;
+  stickerPreview = null;
   //activeTool = "thin";
 });
 
@@ -179,13 +259,21 @@ thickButton.addEventListener("click", () => {
   activeTool = "thick";
   previewDot.style.width = "7px";
   previewDot.style.height = "7px";
+  selectedSticker = null;
+  stickerPreview = null;
 });
 
 canvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   x = e.offsetX;
   y = e.offsetY;
-  currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth);
+  if (activeTool === "sticker" && selectedSticker) {
+    // Create a sticker stamp command
+    currentLine = new StickerStamp(e.offsetX, e.offsetY, selectedSticker);
+  } else {
+    // Create a marker line command
+    currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth);
+  }
   redoStack = [];
   notify("drawing-changed");
 });
@@ -194,8 +282,21 @@ canvas.addEventListener("mousemove", (e) => {
   if (isDrawing && currentLine) {
     currentLine.drag(e.offsetX, e.offsetY);
     notify("drawing-changed");
+  } else if (activeTool === "sticker" && selectedSticker) {
+    // Show sticker preview at cursor position
+    if (!stickerPreview) {
+      stickerPreview = new StickerPreview(
+        e.offsetX,
+        e.offsetY,
+        selectedSticker,
+      );
+    } else {
+      stickerPreview.drag(e.offsetX, e.offsetY);
+    }
+    notify("tool-moved");
   }
-  /*
+
+  /* this is if I want to preview on canvas for the thick and thin tool
   if (activeTool !== "none") {
     // Position the dot at mouse
     //console.log("hello");
@@ -224,6 +325,8 @@ thinButton.addEventListener("mouseover", () => {
   previewDot.style.top = "250px";
   previewDot.style.width = "3px";
   previewDot.style.height = "3px";
+  //selectedSticker = null;
+  //stickerPreview = null;
 });
 
 document.addEventListener("mousemove", (e) => {
@@ -254,6 +357,14 @@ thickButton.addEventListener("mouseout", () => {
 // Hide preview when leaving canvas
 canvas.addEventListener("mouseout", () => {
   previewDot.style.display = "none";
+  stickerPreview = null;
+  notify("drawing-changed");
+});
+
+canvas.addEventListener("mouseenter", (e) => {
+  if (activeTool === "thin" || activeTool === "thick") {
+    previewDot.style.display = "block";
+  }
 });
 
 // Re-show when back over canvas (if tool still active)
