@@ -43,16 +43,25 @@ thickButton.id = "thickButton";
 thickButton.innerHTML = "thick";
 document.body.appendChild(thickButton);
 
+const newSticker = document.createElement("button") as HTMLButtonElement;
+newSticker.id = "newSticker";
+newSticker.innerHTML = "newSticker";
+document.body.appendChild(newSticker);
+
 const stickerContainer = document.createElement("div");
 stickerContainer.id = "stickers";
 document.body.appendChild(stickerContainer);
 
-const stickers = ["🦖", "🌮", "🚀", "🧠", "🎨"];
+let stickers = ["🦖", "🌮", "🚀", "🧠", "🎨"];
 
 let selectedSticker: string | null = null;
 let activeTool: "none" | "thin" | "thick" | "sticker" = "none";
 
 stickers.forEach((sticker) => {
+  createStickerButton(sticker);
+});
+
+function createStickerButton(sticker: string) {
   const btn = document.createElement("button");
   btn.innerHTML = sticker;
   btn.title = `Use ${sticker}`;
@@ -63,7 +72,7 @@ stickers.forEach((sticker) => {
     bus.dispatchEvent(new Event("tool-moved"));
   });
   stickerContainer.appendChild(btn);
-});
+}
 
 const previewDot = document.createElement("div");
 previewDot.style.position = "absolute";
@@ -150,6 +159,7 @@ class StickerPreview implements Command {
 
   display(ctx: CanvasRenderingContext2D): void {
     ctx.globalAlpha = 0.5; // Make preview semi-transparent
+    ctx.fillStyle = "black";
     ctx.font = "32px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -176,6 +186,7 @@ class StickerStamp implements Command {
   }
 
   display(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = "black";
     ctx.font = "32px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -261,6 +272,13 @@ thickButton.addEventListener("click", () => {
   previewDot.style.height = "7px";
   selectedSticker = null;
   stickerPreview = null;
+});
+
+newSticker.addEventListener("click", () => {
+  let text = prompt("Enter custom sticker: ", "🧽");
+
+  stickers.push(text as string);
+  createStickerButton(text as string);
 });
 
 canvas.addEventListener("mousedown", (e) => {
