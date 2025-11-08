@@ -3,13 +3,27 @@
 
 import "./style.css";
 
-document.body.innerHTML = `
-`;
+document.body.innerHTML = ``;
+document.body.style.display = "flex";
+document.body.style.flexDirection = "column";
+document.body.style.alignItems = "center";
+document.body.style.justifyContent = "center";
+document.body.style.minHeight = "100vh";
+document.body.style.margin = "0";
+document.body.style.padding = "20px";
+document.body.style.boxSizing = "border-box";
 
 const titleElement = document.createElement("h1");
-titleElement.innerHTML = "CMPM 170 Homework";
-
+titleElement.innerHTML = "Drawing Canvas";
+titleElement.style.marginBottom = "20px";
 document.body.appendChild(titleElement);
+
+const buttonContainer = document.createElement("div");
+buttonContainer.style.display = "flex";
+buttonContainer.style.gap = "10px";
+buttonContainer.style.marginBottom = "15px";
+buttonContainer.style.justifyContent = "center";
+document.body.appendChild(buttonContainer);
 
 const canvas = document.createElement("canvas")!;
 if (!canvas) {
@@ -21,43 +35,53 @@ const ctx = canvas.getContext("2d")!;
 const clearButton = document.createElement("button") as HTMLButtonElement;
 clearButton.id = "clearButton";
 clearButton.innerHTML = "Clear";
-document.body.appendChild(clearButton);
+buttonContainer.appendChild(clearButton);
 
 const undoButton = document.createElement("button") as HTMLButtonElement;
 undoButton.id = "undoButton";
 undoButton.innerHTML = "Undo";
-document.body.appendChild(undoButton);
+buttonContainer.appendChild(undoButton);
 
 const redoButton = document.createElement("button") as HTMLButtonElement;
 redoButton.id = "redoButton";
 redoButton.innerHTML = "Redo";
-document.body.appendChild(redoButton);
+buttonContainer.appendChild(redoButton);
 
 const thinButton = document.createElement("button") as HTMLButtonElement;
 thinButton.id = "thinButton";
 thinButton.innerHTML = "thin";
-document.body.appendChild(thinButton);
+buttonContainer.appendChild(thinButton);
 
 const thickButton = document.createElement("button") as HTMLButtonElement;
 thickButton.id = "thickButton";
 thickButton.innerHTML = "thick";
-document.body.appendChild(thickButton);
+buttonContainer.appendChild(thickButton);
 
 const newSticker = document.createElement("button") as HTMLButtonElement;
 newSticker.id = "newSticker";
 newSticker.innerHTML = "newSticker";
-document.body.appendChild(newSticker);
+buttonContainer.appendChild(newSticker);
 
 const exportButton = document.createElement("button") as HTMLButtonElement;
 exportButton.id = "exportButton";
 exportButton.innerHTML = "Export";
-document.body.appendChild(exportButton);
+buttonContainer.appendChild(exportButton);
 
 const stickerContainer = document.createElement("div");
 stickerContainer.id = "stickers";
+stickerContainer.style.display = "flex";
+stickerContainer.style.gap = "8px";
+stickerContainer.style.marginBottom = "20px";
+stickerContainer.style.flexWrap = "wrap";
+stickerContainer.style.justifyContent = "center";
 document.body.appendChild(stickerContainer);
 
-let stickers = ["🦖", "🌮", "🚀", "🧠", "🎨"];
+const canvasWrapper = document.createElement("div");
+canvasWrapper.style.position = "relative";
+canvasWrapper.style.display = "inline-block";
+document.body.appendChild(canvasWrapper);
+
+let stickers = ["😀", "❤️", "⚪", "🧠", "🎨"];
 
 let selectedSticker: string | null = null;
 let activeTool: "none" | "thin" | "thick" | "sticker" = "none";
@@ -71,6 +95,7 @@ function createStickerButton(sticker: string) {
   btn.innerHTML = sticker;
   btn.title = `Use ${sticker}`;
   btn.style.fontSize = "20px";
+  btn.style.padding = "8px 12px";
   btn.addEventListener("click", () => {
     selectedSticker = sticker;
     activeTool = "sticker";
@@ -93,18 +118,18 @@ document.body.appendChild(previewDot);
 
 canvas.width = 256;
 canvas.height = 256;
-canvas.style.position = "absolute";
-canvas.style.left = "10px";
-canvas.style.top = "150px";
+canvas.style.border = "2px solid #333";
+canvas.style.borderRadius = "4px";
+//canvas.style.cursor = "crosshair";
 
-document.body.appendChild(canvas);
+canvasWrapper.appendChild(canvas);
 
 ctx.fillStyle = "green";
 ctx.fillRect(0, 0, 256, 256);
 
 let x = 0;
 let y = 0;
-let lineWidth = 1;
+let lineWidth = 2;
 
 interface point {
   x: number;
@@ -264,7 +289,7 @@ thinButton.addEventListener("click", () => {
   activeTool = "thin";
   previewDot.style.width = "3px";
   previewDot.style.height = "3px";
-  lineWidth = 1;
+  lineWidth = 2;
   selectedSticker = null;
   stickerPreview = null;
   //activeTool = "thin";
