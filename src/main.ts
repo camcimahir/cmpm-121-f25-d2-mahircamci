@@ -48,6 +48,11 @@ newSticker.id = "newSticker";
 newSticker.innerHTML = "newSticker";
 document.body.appendChild(newSticker);
 
+const exportButton = document.createElement("button") as HTMLButtonElement;
+exportButton.id = "exportButton";
+exportButton.innerHTML = "Export";
+document.body.appendChild(exportButton);
+
 const stickerContainer = document.createElement("div");
 stickerContainer.id = "stickers";
 document.body.appendChild(stickerContainer);
@@ -279,6 +284,38 @@ newSticker.addEventListener("click", () => {
 
   stickers.push(text as string);
   createStickerButton(text as string);
+});
+
+exportButton.addEventListener("click", () => {
+  // Create a temporary canvas scaled 4x (1024x1024)
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  const exportCtx = exportCanvas.getContext("2d")!;
+
+  // Scale the context 4x (since 256 * 4 = 1024)
+  exportCtx.scale(4, 4);
+
+  // Fill with the same green background
+  exportCtx.fillStyle = "green";
+  exportCtx.fillRect(0, 0, 256, 256);
+
+  // Draw all commands (excluding previews) on the scaled canvas
+  for (const cmd of lineArr) {
+    cmd.display(exportCtx);
+  }
+
+  //download
+  exportCanvas.toBlob((blob) => {
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "drawing.png";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  }, "image/png");
 });
 
 canvas.addEventListener("mousedown", (e) => {
