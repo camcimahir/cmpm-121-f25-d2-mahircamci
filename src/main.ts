@@ -85,6 +85,14 @@ let stickers = ["😀", "❤️", "⚪", "🧠", "🎨"];
 
 let selectedSticker: string | null = null;
 let activeTool: "none" | "thin" | "thick" | "sticker" = "none";
+let currentColor: string = "black";
+
+function randomColor(): string {
+  const r = Math.floor(Math.random() * 256);
+  const g = Math.floor(Math.random() * 256);
+  const b = Math.floor(Math.random() * 256);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 stickers.forEach((sticker) => {
   createStickerButton(sticker);
@@ -99,6 +107,7 @@ function createStickerButton(sticker: string) {
   btn.addEventListener("click", () => {
     selectedSticker = sticker;
     activeTool = "sticker";
+    currentColor = randomColor();
     bus.dispatchEvent(new Event("tool-moved"));
   });
   stickerContainer.appendChild(btn);
@@ -111,6 +120,7 @@ previewDot.style.width = "10px";
 previewDot.style.height = "10px";
 previewDot.style.borderRadius = "50%";
 previewDot.style.backgroundColor = "black";
+previewDot.style.border = "1px solid white"; //add small border to the preview so that it stands out
 previewDot.style.transform = "translate(-50%, -50%)"; // Center on cursor
 previewDot.style.display = "none"; // Hidden by default
 previewDot.style.zIndex = "1000";
@@ -144,10 +154,12 @@ interface Command {
 class MarkerLine implements Command {
   private points: point[];
   private lineWidth: number;
+  private color: string;
 
-  constructor(x: number, y: number, lineWidth: number) {
+  constructor(x: number, y: number, lineWidth: number, color: string) {
     this.points = [{ x, y }];
     this.lineWidth = lineWidth;
+    this.color = color;
   }
 
   drag(x: number, y: number): void {
@@ -158,7 +170,7 @@ class MarkerLine implements Command {
     if (this.points.length < 2) return;
 
     ctx.beginPath();
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = this.color;
     ctx.lineWidth = this.lineWidth;
     ctx.moveTo(this.points[0].x, this.points[0].y);
 
@@ -202,11 +214,13 @@ class StickerStamp implements Command {
   private x: number;
   private y: number;
   private emoji: string;
+  private color: string;
 
-  constructor(x: number, y: number, emoji: string) {
+  constructor(x: number, y: number, emoji: string, color: string) {
     this.x = x;
     this.y = y;
     this.emoji = emoji;
+    this.color = color;
   }
 
   drag(x: number, y: number): void {
@@ -216,7 +230,8 @@ class StickerStamp implements Command {
   }
 
   display(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "black";
+    ctx.fillStyle = this.color;
+
     ctx.font = "32px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -289,6 +304,8 @@ thinButton.addEventListener("click", () => {
   activeTool = "thin";
   previewDot.style.width = "3px";
   previewDot.style.height = "3px";
+  currentColor = randomColor();
+  previewDot.style.backgroundColor = currentColor;
   lineWidth = 2;
   selectedSticker = null;
   stickerPreview = null;
@@ -300,6 +317,8 @@ thickButton.addEventListener("click", () => {
   activeTool = "thick";
   previewDot.style.width = "7px";
   previewDot.style.height = "7px";
+  currentColor = randomColor();
+  previewDot.style.backgroundColor = currentColor;
   selectedSticker = null;
   stickerPreview = null;
 });
@@ -349,10 +368,10 @@ canvas.addEventListener("mousedown", (e) => {
   y = e.offsetY;
   if (activeTool === "sticker" && selectedSticker) {
     // Create a sticker stamp command
-    currentLine = new StickerStamp(e.offsetX, e.offsetY, selectedSticker);
+    currentLine = new StickerStamp(e.offsetX, e.offsetY, selectedSticker, currentColor);
   } else {
     // Create a marker line command
-    currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth);
+    currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth, currentColor);
   }
   redoStack = [];
   notify("drawing-changed");
