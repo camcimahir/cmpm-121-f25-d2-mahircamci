@@ -368,7 +368,12 @@ canvas.addEventListener("mousedown", (e) => {
   y = e.offsetY;
   if (activeTool === "sticker" && selectedSticker) {
     // Create a sticker stamp command
-    currentLine = new StickerStamp(e.offsetX, e.offsetY, selectedSticker, currentColor);
+    currentLine = new StickerStamp(
+      e.offsetX,
+      e.offsetY,
+      selectedSticker,
+      currentColor,
+    );
   } else {
     // Create a marker line command
     currentLine = new MarkerLine(e.offsetX, e.offsetY, lineWidth, currentColor);
